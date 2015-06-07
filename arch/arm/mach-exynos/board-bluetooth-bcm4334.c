@@ -53,7 +53,6 @@ struct bcm_bt_lpm {
 
 	struct wake_lock host_wake_lock;
 	struct wake_lock bt_wake_lock;
-	char wake_lock_name[100];
 } bt_lpm;
 
 static int gpio_rev(int gpio)
@@ -230,15 +229,11 @@ static int bcm_bt_lpm_init(struct platform_device *pdev)
 	bt_lpm.host_wake = 0;
 	bt_is_running = 0;
 
-	snprintf(bt_lpm.wake_lock_name, sizeof(bt_lpm.wake_lock_name),
-			"BT_host_wake");
 	wake_lock_init(&bt_lpm.host_wake_lock, WAKE_LOCK_SUSPEND,
-			 bt_lpm.wake_lock_name);
+			 "BT_host_wake");
 
-	snprintf(bt_lpm.wake_lock_name, sizeof(bt_lpm.wake_lock_name),
-			"BT_bt_wake");
 	wake_lock_init(&bt_lpm.bt_wake_lock, WAKE_LOCK_SUSPEND,
-			 bt_lpm.wake_lock_name);
+			 "BT_bt_wake");
 
 	irq = IRQ_BT_HOST_WAKE;
 	ret = request_irq(irq, host_wake_isr, IRQF_TRIGGER_HIGH,

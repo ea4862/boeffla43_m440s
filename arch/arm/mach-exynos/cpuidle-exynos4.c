@@ -447,6 +447,19 @@ static inline int check_sromc_access(void)
 	return atomic_read(&sromc_use_count);
 }
 
+#ifdef CONFIG_TARGET_LOCALE_KOR
+#ifdef CONFIG_30PIN_CONN
+static bool cp_usb_state;
+void set_cp_usb_state(bool connected)
+{
+	if (cp_usb_state != connected) {
+		pr_info("%s(%d)\n", __func__, connected);
+		cp_usb_state = connected;
+	}
+}
+#endif
+#endif
+
 static int exynos4_check_operation(void)
 {
 	if (check_power_domain())
@@ -502,6 +515,13 @@ static int exynos4_check_operation(void)
 #ifdef CONFIG_INTERNAL_MODEM_IF
 	if (check_idpram_op())
 		return 1;
+#endif
+
+#ifdef CONFIG_TARGET_LOCALE_KOR
+#ifdef CONFIG_30PIN_CONN
+	if (cp_usb_state)
+		return 1;
+#endif
 #endif
 
 	return 0;

@@ -647,9 +647,6 @@ static void dump_state_and_upload(void);
 static int sec_debug_panic_handler(struct notifier_block *nb,
 				   unsigned long l, void *buf)
 {
-	if (!sec_debug_level.en.kernel_fault)
-		return -1;
-
 	local_irq_disable();
 
 	sec_debug_set_upload_magic(0x66262564, buf);
@@ -671,22 +668,24 @@ static int sec_debug_panic_handler(struct notifier_block *nb,
 	sec_debug_disable_watchdog();
 #endif
 
+    if(sec_debug_level.en.kernel_fault) {
 #ifdef CONFIG_SEC_DEBUG_FUPLOAD_DUMP_MORE
-	dump_all_task_info();
-	dump_cpu_stat();
+		dump_all_task_info();
+		dump_cpu_stat();
 
-	show_state_filter(TASK_STATE_MAX);	/* no backtrace */
+		show_state_filter(TASK_STATE_MAX);	/* no backtrace */
 #else
-	show_state();
+		show_state();
 #endif
 
-	sec_debug_dump_stack();
+		sec_debug_dump_stack();
 #if defined(CONFIG_SEC_MODEM_P8LTE)
-	sec_set_cp_upload();
+		sec_set_cp_upload();
 #endif
 #ifdef CONFIG_PROC_SEC_MEMINFO
-	sec_meminfo_print();
+		sec_meminfo_print();
 #endif
+    }
 	sec_debug_hw_reset();
 
 	return 0;
