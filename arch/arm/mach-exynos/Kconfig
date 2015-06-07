@@ -1335,6 +1335,8 @@ config GC2PD_00_BD
 
 source "arch/arm/mach-exynos/Kconfig.slp"
 
+source "arch/arm/mach-exynos/Kconfig.slp"
+
 config WRITEBACK_ENABLED
 	bool "Samsung Writeback Enable"
 	help
@@ -1829,6 +1831,10 @@ endif
 if SEC_MODEM
 comment "Samsung Modem Feature"
 
+config LTE_VIA_SWITCH
+	bool
+	default n
+
 choice
 	prompt "SVNET2 version"
 	default SEC_MODEM_PRIMITIVE
@@ -2144,11 +2150,18 @@ config MACH_GD2_SENSOR
 	  K330 / STM
 	  AK8963 / AKM
 	  CM36651 / CAPELLA
-	  
 
 config CHARGE_LEVEL
 	bool "Charge level interface"
 	default y
 	help
-	  Allows configuration of ac and usb charging levels	  
+	  Allows configuration of ac and usb charging levels
 
+config USER_RESET_DEBUG
+	bool "KOR reset reason debug feature in user version"
+	default n
+	help
+	  This option enables debugging log for B10 project.
+	  This option provides reset history log in user version.
+	  This option enable proc/reset_reason support
+	  It's only support KOR Model

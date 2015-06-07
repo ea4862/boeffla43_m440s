@@ -1291,6 +1291,7 @@ static int rx_sipc5_frames(struct dpram_link_device *dpld, int dev,
 	 * variables for debug logging
 	 */
 	struct mif_irq_map map;
+	int idx_chk = 1;
 
 	/* Get data size in the RXQ and in/out pointer values */
 	rcvd = get_rxq_rcvd(dpld, dev, mst, &dcst);
@@ -1303,6 +1304,9 @@ static int rx_sipc5_frames(struct dpram_link_device *dpld, int dev,
 	src = dcst.buff;
 	qsize = dcst.qsize;
 	idx = dcst.out;
+
+	if (dcst.in < dcst.out)
+		idx_chk = 0;
 
 	if (dev == IPC_FMT) {
 		set_dpram_map(dpld, &map);
@@ -1349,6 +1353,17 @@ static int rx_sipc5_frames(struct dpram_link_device *dpld, int dev,
 		/* Calculate the start of an SIPC5 frame */
 		frm = src + idx;
 
+#if defined(CONFIG_MACH_C1_KOR_SKT) || defined(CONFIG_MACH_C1_KOR_KT) || defined(CONFIG_MACH_C1_KOR_LGT)
+		/* if index overlap dcst.in, then stop reciveing */
+		if ((idx >= dcst.in) && idx_chk){
+			char str[MIF_MAX_STR_LEN];
+			snprintf(str, MIF_MAX_STR_LEN, "%s: dcst.in overlapped",
+				ld->mc->name);
+			pr_ipc(1, str, hdr, 4);
+			break;
+		}
+#endif
+
 		/* Copy the header in the frame to the header buffer */
 		if (unlikely(dpld->strict_io_access))
 			memcpy16_from_io(hdr, frm, SIPC5_MIN_HEADER_SIZE);
@@ -1377,7 +1392,11 @@ static int rx_sipc5_frames(struct dpram_link_device *dpld, int dev,
 				ld->name, get_dev_name(dev), tot, rest);
 			pr_ipc(1, str, hdr, 4);
 			rcvd = -EBADMSG;
+#if defined(CONFIG_MACH_C1_KOR_SKT) || defined(CONFIG_MACH_C1_KOR_KT) || defined(CONFIG_MACH_C1_KOR_LGT)
+			return rcvd;
+#else
 			goto exit;
+#endif
 		}
 
 		/* Allocate an skb */
@@ -1425,8 +1444,10 @@ static int rx_sipc5_frames(struct dpram_link_device *dpld, int dev,
 		/* Calculate new idx value */
 		rest -= tot;
 		idx += tot;
-		if (unlikely(idx >= qsize))
+		if (unlikely(idx >= qsize)) {
 			idx -= qsize;
+			idx_chk = 1;
+		}
 	}
 
 exit:
