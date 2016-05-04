@@ -1231,8 +1231,15 @@ static void start_unlink_async (struct ehci_hcd *ehci, struct ehci_qh *qh)
 	if (ehci->reclaim
 			|| (qh->qh_state != QH_STATE_LINKED
 				&& qh->qh_state != QH_STATE_UNLINK_WAIT)
-			)
+			) {
+		dev_dbg(&qh->dev->dev,
+			"%s: unlink qh%d-%04x/%p start %d [%d/%d us] qh_state = %d\n",
+			__func__, qh->period,
+			hc32_to_cpup(ehci, &qh->hw->hw_info2) & (QH_CMASK | QH_SMASK),
+			qh, qh->start, qh->usecs, qh->c_usecs, qh->qh_state);
+
 		BUG ();
+	}
 #endif
 
 	/* stop async schedule right now? */

@@ -35,7 +35,7 @@
 #include <linux/earlysuspend.h>
 #endif
 #define EARLYSUSPEND_HOTPLUGLOCK 1
-
+bool hotplug_suspend;
 /*
  * runqueue average
  */
@@ -380,6 +380,13 @@ void cpufreq_pegasusq_min_cpu_unlock(void)
 	lock = atomic_read(&g_hotplug_lock);
 	if (lock == 0)
 		return;
+#if defined(CONFIG_HAS_EARLYSUSPEND) && EARLYSUSPEND_HOTPLUGLOCK
+	if (dbs_tuners_ins.early_suspend >= 0) { /* if LCD is off-state */
+		atomic_set(&g_hotplug_lock, 1);
+		apply_hotplug_lock();
+		return;
+	}
+#endif
 	flag = lock - online;
 	if (flag >= 0)
 		return;
@@ -1312,6 +1319,8 @@ static void cpufreq_pegasusq_early_suspend(struct early_suspend *h)
 	dbs_tuners_ins.early_suspend =
 		atomic_read(&g_hotplug_lock);
 #endif
+	hotplug_suspend = true;
+
 	prev_freq_step = dbs_tuners_ins.freq_step;
 	prev_sampling_rate = dbs_tuners_ins.sampling_rate;
 	dbs_tuners_ins.freq_step = 20;
@@ -1328,6 +1337,8 @@ static void cpufreq_pegasusq_late_resume(struct early_suspend *h)
 #if EARLYSUSPEND_HOTPLUGLOCK
 	atomic_set(&g_hotplug_lock, dbs_tuners_ins.early_suspend);
 #endif
+	hotplug_suspend = false;
+
 	dbs_tuners_ins.early_suspend = -1;
 	dbs_tuners_ins.freq_step = prev_freq_step;
 	dbs_tuners_ins.sampling_rate = prev_sampling_rate;

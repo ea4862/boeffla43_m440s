@@ -574,6 +574,11 @@ static int rmnet_usb_ctrl_write(struct rmnet_ctrl_dev *dev, char *buf,
 	struct urb		*sndurb;
 	struct usb_ctrlrequest	*out_ctlreq;
 	struct usb_device	*udev;
+#if defined (CONFIG_TARGET_LOCALE_USA) && (CONFIG_MACH_T0_USA_VZW)
+	int			check_if_suspended = 0, m_elapsed;
+	unsigned long flag, last_busy;
+	long elapsed;
+#endif
 
 	if (!is_dev_connected(dev))
 		return -ENETRESET;
@@ -614,6 +619,26 @@ static int rmnet_usb_ctrl_write(struct rmnet_ctrl_dev *dev, char *buf,
 	}
 
 	udev = interface_to_usbdev(dev->intf);
+
+#if defined (CONFIG_TARGET_LOCALE_USA) && (CONFIG_MACH_T0_USA_VZW)
+	spin_lock_irqsave(&dev->rx_lock, flag);
+	check_if_suspended = (udev->dev.power.runtime_status == RPM_SUSPENDED) ||
+		(udev->dev.power.runtime_status == RPM_SUSPENDING);
+
+	last_busy = ACCESS_ONCE(udev->dev.power.last_busy);
+	elapsed = jiffies - last_busy;
+	m_elapsed= jiffies_to_msecs(elapsed);
+
+	if ((m_elapsed>= 3000) && !check_if_suspended) {
+		dev_err(dev->devicep, "[MIF] Expire!!, elapsed : %d, "
+				"runtime_status : %d, usage_count : %d\n",
+				m_elapsed, udev->dev.power.runtime_status,
+				atomic_read(&udev->dev.power.usage_count));
+		panic("[MIF] expire\n");
+	}
+	spin_unlock_irqrestore(&dev->rx_lock, flag);
+#endif
+
 	usb_mark_last_busy(udev);
 
 	/* CDC Send Encapsulated Request packet */

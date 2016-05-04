@@ -76,6 +76,8 @@ typedef unsigned __bitwise__ reclaim_mode_t;
 int max_swappiness = 200;
 #endif
 
+extern bool hotplug_suspend;
+
 struct scan_control {
 	/* Incremented by the number of inactive pages that were scanned */
 	unsigned long nr_scanned;
@@ -2857,7 +2859,12 @@ loop_again:
 			if (has_under_min_watermark_zone)
 				count_vm_event(KSWAPD_SKIP_CONGESTION_WAIT);
 			else
-				wait_iff_congested(unbalanced_zone, BLK_RW_ASYNC, HZ/10);
+			{
+				if(hotplug_suspend)
+					congestion_wait(BLK_RW_ASYNC, HZ/10);
+				else
+					wait_iff_congested(unbalanced_zone, BLK_RW_ASYNC, HZ/10);
+			}
 		}
 
 		/*
