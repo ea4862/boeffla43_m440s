@@ -35,7 +35,7 @@
 #include <linux/earlysuspend.h>
 #endif
 #define EARLYSUSPEND_HOTPLUGLOCK 1
-bool hotplug_suspend;
+
 /*
  * runqueue average
  */
@@ -150,7 +150,11 @@ static unsigned int get_nr_run_avg(void)
 #define DEF_FREQUENCY_MIN_SAMPLE_RATE		(10000)
 #define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
+#if defined(CONFIG_MACH_T0_CHN_OPEN_DUOS) || defined(CONFIG_MACH_T0_CHN_CU_DUOS) || defined(CONFIG_MACH_T0_CHN_CTC)
+#define DEF_SAMPLING_RATE			(200000)
+#else
 #define DEF_SAMPLING_RATE			(50000)
+#endif
 #define MIN_SAMPLING_RATE			(10000)
 #define MAX_HOTPLUG_RATE			(40u)
 
@@ -1319,8 +1323,6 @@ static void cpufreq_pegasusq_early_suspend(struct early_suspend *h)
 	dbs_tuners_ins.early_suspend =
 		atomic_read(&g_hotplug_lock);
 #endif
-	hotplug_suspend = true;
-
 	prev_freq_step = dbs_tuners_ins.freq_step;
 	prev_sampling_rate = dbs_tuners_ins.sampling_rate;
 	dbs_tuners_ins.freq_step = 20;
@@ -1337,8 +1339,6 @@ static void cpufreq_pegasusq_late_resume(struct early_suspend *h)
 #if EARLYSUSPEND_HOTPLUGLOCK
 	atomic_set(&g_hotplug_lock, dbs_tuners_ins.early_suspend);
 #endif
-	hotplug_suspend = false;
-
 	dbs_tuners_ins.early_suspend = -1;
 	dbs_tuners_ins.freq_step = prev_freq_step;
 	dbs_tuners_ins.sampling_rate = prev_sampling_rate;

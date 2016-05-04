@@ -144,6 +144,7 @@ static int cbp_dump_update(struct dpram_link_device *dpld, unsigned long arg)
 	int resp = 0;
 	u8 *dest = NULL;
 	u8 *buff = NULL;
+	u8 *header_buff = NULL;
 	int buff_size = 0;
 	u16 plen = 0;
 
@@ -170,12 +171,20 @@ static int cbp_dump_update(struct dpram_link_device *dpld, unsigned long arg)
 
 	dest = (u8 *)dpld->ul_map.buff;
 
-	header.bop = *(u8 *)(dest);
-	header.num_frames = *(u16 *)(dest + 1);
-	header.curr_frame = *(u16 *)(dest + 3);
-	header.len = *(u16 *)(dest + 5);
+	header_buff = vmalloc(sizeof(struct dpram_udl_header));
+	if (!header_buff) {
+		err = -ENOMEM;
+		goto exit;
+	}
+
+	memcpy16_from_io(header_buff, dest, sizeof(struct dpram_udl_header));
+
+	header.bop = *(u8 *)(header_buff);
+	header.num_frames = *(u16 *)(header_buff + 1);
+	header.curr_frame = *(u16 *)(header_buff + 3);
+	header.len = *(u16 *)(header_buff + 5);
 #ifdef CONFIG_CDMA_MODEM_CBP82
-	header.pad = *(u8 *)(dest + 7);
+	header.pad = *(u8 *)(header_buff + 7);
 #endif
 
 	mif_debug("total frames:%d, current frame:%d, data len:%d\n",

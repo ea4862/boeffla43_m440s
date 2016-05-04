@@ -3346,12 +3346,11 @@ static int tcp_is_local(struct net *net, __be32 addr) {
 	rt = ip_route_output_key(net, &fl4);
 	if (IS_ERR_OR_NULL(rt))
 		return 0;
-
-		res = rt->dst.dev && (rt->dst.dev->flags & IFF_LOOPBACK);
-		/* Arp_cache entry increase to 1024 whenever WIFI <-> LTE(with CMC22x Modem).
-		So dst_release() is needed to release undestroy dst_entry */
-		dst_release(&rt->dst);
-		return res;
+	res = rt->dst.dev && (rt->dst.dev->flags & IFF_LOOPBACK);
+	/* Arp_cache entry increase to 1024 whenever WIFI <-> LTE.
+	So dst_release() is needed to release undestroy dst_entry */
+	dst_release(&rt->dst);
+	return res;
 }
 
 #if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)

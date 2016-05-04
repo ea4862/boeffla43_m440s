@@ -63,4 +63,5 @@
 #define V9FS_MAGIC		0x01021997
 
 #define SDCARDFS_SUPER_MAGIC    0xb550ca10
+
 #endif /* __LINUX_MAGIC_H__ */
